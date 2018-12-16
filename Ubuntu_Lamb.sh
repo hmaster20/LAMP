@@ -146,3 +146,36 @@ RewriteRule . /index.php [L]
 
 sudo service apache2 restart
 
+
+
+#AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+# on Ubuntu 14.04:
+
+ echo "ServerName localhost" | sudo tee /etc/apache2/conf-available/fqdn.conf
+ sudo a2enconf fqdn
+ 
+# Корректировака прав (permissions)
+# По умолчанию
+When you setup WP you (the webserver) may need write access to the files. So the access rights may need to be loose.
+
+chown www-data:www-data  -R * # Let Apache be owner
+find . -type d -exec chmod 755 {} \;  # Change directory permissions rwxr-xr-x
+find . -type f -exec chmod 644 {} \;  # Change file permissions rw-r--r--
+After the setup you should tighten the access rights, according to Hardening WordPress all files except for wp-content should be writable by your user account only. wp-content must be writable by www-data too.
+
+chown <username>:<username>  -R * # Let your useraccount be owner
+chown www-data:www-data wp-content # Let apache be owner of wp-content
+Maybe you want to change the contents in wp-content later on. In this case you could
+
+temporarily change to the user to www-data with su,
+give wp-content group write access 775 and join the group www-data or
+give your user the access rights to the folder using ACLs.
+Whatever you do, make sure the files have rw permissions for www-data.
+
+# Сброс настроек на стандартные
+sudo ./fix-wordpress-permissions.sh /var/www/html/
+
+# Дополнительная корректировка нужна для локализации я зыка тем и каталога uploads
+ sudo chmod -R 777 languages/
+
+ sudo service apache2 restart
